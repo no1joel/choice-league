@@ -37,6 +37,7 @@ enum STATE {
 
 enum MODE {
   KNOCKOUT = 'Knockout',
+  DOUBLE_ELIMINATION = 'Double Elimination',
   ROUND_ROBIN = 'Round Robin',
 }
 
@@ -45,7 +46,7 @@ export default Vue.extend({
   data(): {
     state: STATE
     choices: string[]
-    matchups: [string, string][]
+    matchups: [string, string | null][]
     currentMatchupIndex: number
     results: [string, string | null, number][]
     winner: string
@@ -80,7 +81,7 @@ export default Vue.extend({
     showResults(): boolean {
       return this.state === STATE.RESULTS
     },
-    currentMatchup(): [string, string] | undefined {
+    currentMatchup(): [string, string | null] | undefined {
       return this.matchups[this.currentMatchupIndex]
     },
     wins(): Record<string, number> {
@@ -95,6 +96,31 @@ export default Vue.extend({
           return acc
         }, {} as Record<string, number>)
     },
+    losses(): Record<string, number> {
+      return this.results
+        .map(
+          ([first, second, winIndex]) => [first, second][winIndex === 1 ? 0 : 1]
+        )
+        .reduce((acc, choice) => {
+          if (choice === null) {
+            return acc
+          }
+          const loseCount = acc[choice] === undefined ? 0 : acc[choice]
+          acc[choice] = loseCount + 1
+          return acc
+        }, {} as Record<string, number>)
+    },
+    winners(): string[] {
+      const maxWins = Object.values(this.wins).sort().reverse()[0]
+      return Object.entries(this.wins)
+        .filter(([, winCount]) => winCount === maxWins)
+        .map(([choice]) => choice)
+    },
+    singleLosers(): string[] {
+      return Object.entries(this.losses)
+        .filter(([, lossCount]) => lossCount === 1)
+        .map(([choice]) => choice)
+    },
   },
   methods: {
     onModeSelected(mode: MODE) {
@@ -108,25 +134,25 @@ export default Vue.extend({
       this.winner = ''
       this.round = 0
 
-      if (this.mode === MODE.KNOCKOUT) {
-        this.roundCount = Math.ceil(Math.log2(choices.length))
-        const {
-          matchups,
-          choicesLeft,
-        }: { matchups: [string, string][]; choicesLeft: string[] } =
-          getKnockoutMatchups(choices)
-        this.matchups = matchups
-        if (choicesLeft.length > 0) {
-          const [remainder] = choicesLeft
-          this.results.push([remainder, null, 0])
-        }
-      } else {
+      if (this.mode === MODE.ROUND_ROBIN) {
         this.roundCount = 0
         const {
           matchups,
           choicesLeft,
         }: { matchups: [string, string][]; choicesLeft: string[] } =
           getRoundRobinMatchups(choices)
+        this.matchups = matchups
+        if (choicesLeft.length > 0) {
+          const [remainder] = choicesLeft
+          this.results.push([remainder, null, 0])
+        }
+      } else {
+        this.roundCount = Math.ceil(Math.log2(choices.length))
+        const {
+          matchups,
+          choicesLeft,
+        }: { matchups: [string, string][]; choicesLeft: string[] } =
+          getKnockoutMatchups(choices)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
           const [remainder] = choicesLeft
@@ -148,27 +174,49 @@ export default Vue.extend({
       this.currentMatchupIndex = 0
       this.round += 1
 
-      const maxWins = Object.values(this.wins).sort().reverse()[0]
-      const winners = Object.entries(this.wins)
-        .filter(([, winCount]) => winCount === maxWins)
-        .map(([choice]) => choice)
-      if (winners.length === 1) {
-        const [winner] = winners
+      if (
+        this.winners.length === 1 &&
+        !(this.mode === MODE.DOUBLE_ELIMINATION && this.singleLosers.length > 0)
+      ) {
+        const [winner] = this.winners
         this.winner = winner
         this.state = STATE.RESULTS
         return
       }
 
-      if (this.mode === MODE.KNOCKOUT) {
+      if (
+        this.mode === MODE.KNOCKOUT ||
+        this.mode === MODE.DOUBLE_ELIMINATION
+      ) {
+        if (
+          this.mode === MODE.DOUBLE_ELIMINATION &&
+          this.singleLosers.length > 0 &&
+          this.winners.length < 2
+        ) {
+          const {
+            matchups,
+            choicesLeft,
+          }: { matchups: [string, string][]; choicesLeft: string[] } =
+            getKnockoutMatchups(this.singleLosers)
+          this.matchups = matchups
+          if (choicesLeft.length > 0) {
+            const [remainder] = choicesLeft
+            this.matchups.unshift([remainder, null])
+            this.onDecisionMade(remainder)
+            return
+          }
+        }
+
         const {
           matchups,
           choicesLeft,
         }: { matchups: [string, string][]; choicesLeft: string[] } =
-          getKnockoutMatchups(winners)
+          getKnockoutMatchups(this.winners)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
           const [remainder] = choicesLeft
-          this.results.push([remainder, null, 0])
+          this.matchups.unshift([remainder, null])
+          this.onDecisionMade(remainder)
         }
       }
     },
