@@ -35,7 +35,9 @@
 </template>
 
 <script lang="ts">
-export default {
+import Vue from 'vue'
+
+export default Vue.extend({
   props: {
     results: {
       type: Array,
@@ -51,24 +53,27 @@ export default {
     },
   },
   computed: {
-    winCountsRanked() {
-      return [...new Set(Object.values(this.wins))].sort().reverse()
+    winCountsRanked(): number[] {
+      return [...new Set(Object.values(this.wins) as number[])].sort().reverse()
     },
     reverseResults() {
       return this.results.slice().reverse()
     },
-    rankings() {
+    rankings(): [number, string][] {
       const choices = new Set(
-        this.results
+        (this.results as [string, string][])
           .flatMap(([first, second]) => [first, second])
           .filter((choice) => choice !== null)
       )
       return [...choices]
-        .map((choice) => [this.getRanking(choice), choice])
-        .map(([ranking, choice]) => [
-          ranking === 0 ? this.winCountsRanked.length + 1 : ranking,
-          choice,
-        ])
+        .map((choice) => [this.getRanking(choice), choice] as [number, string])
+        .map(
+          ([ranking, choice]) =>
+            [
+              ranking === 0 ? this.winCountsRanked.length + 1 : ranking,
+              choice,
+            ] as [number, string]
+        )
         .sort(([firstRank], [secondRank]) => secondRank - firstRank)
         .reverse()
     },
@@ -82,5 +87,5 @@ export default {
       return this.winCountsRanked.indexOf(winCount) + 1
     },
   },
-}
+})
 </script>

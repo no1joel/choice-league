@@ -31,7 +31,9 @@
 </template>
 
 <script>
-export default {
+import Vue from 'vue'
+
+export default Vue.extend({
   props: {
     modes: {
       type: Array,
@@ -48,5 +50,5 @@ export default {
       this.$emit('selected', this.selectedMode)
     },
   },
-}
+})
 </script>

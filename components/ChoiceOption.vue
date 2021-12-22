@@ -33,7 +33,9 @@
 </template>
 
 <script lang="ts">
-export default {
+import Vue from 'vue'
+
+export default Vue.extend({
   props: {
     choice: {
       type: String,
@@ -50,5 +52,5 @@ export default {
       setTimeout(() => (this.copied = false), 3000)
     },
   },
-}
+})
 </script>

@@ -25,7 +25,9 @@
 </template>
 
 <script lang="ts">
-export default {
+import Vue from 'vue'
+
+export default Vue.extend({
   data() {
     return {
       choicesStr: '',
@@ -52,5 +54,5 @@ export default {
       this.$emit('choices-entered', this.choices)
     },
   },
-}
+})
 </script>
