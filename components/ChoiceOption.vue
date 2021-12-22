@@ -1,8 +1,11 @@
 <template>
   <div class="w-full h-full grid grid-auto-rows-2 gap-2 justify-items-stretch">
-    <div class="flex items-center text-center self-end">
+    <div class="flex items-center text-center self-end relative">
       <div class="flex-1 text-5xl">{{ choice }}</div>
-      <button class="basis-1/12" @click="onCopyClick">
+      <button
+        class="absolute top-0 right-0 text-gray-400 text-sm"
+        @click="onCopyClick"
+      >
         {{ copied ? 'Copied!' : 'Copy' }}
       </button>
     </div>

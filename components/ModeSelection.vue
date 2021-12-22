@@ -1,6 +1,6 @@
 <template>
-  <div class="flex h-full w-100">
-    <div class="flex-1">
+  <div class="sm:grid sm:grid-cols-2 gap-2 h-full w-full">
+    <div>
       <h2 class="text-xl font-bold">Select the mode</h2>
       <label v-for="mode in modes" :key="mode" class="block text-lg">
         <input
@@ -15,6 +15,8 @@
     </div>
     <button
       class="
+        block
+        w-full
         border border-green-500
         bg-green-400
         text-green-900

@@ -10,6 +10,10 @@
       v-else-if="showBattle && currentMatchup"
       :first-choice="currentMatchup[0]"
       :second-choice="currentMatchup[1]"
+      :round-count="roundCount"
+      :round-index="round"
+      :matchup-count="matchups.length"
+      :matchup-index="currentMatchupIndex"
       @decision-made="onDecisionMade"
     />
     <ChoiceResults
@@ -47,6 +51,7 @@ export default Vue.extend({
     winner: string
     modes: MODE[]
     mode: MODE
+    round: number
   } {
     return {
       state: STATE.MODE_SELECT,
@@ -57,6 +62,8 @@ export default Vue.extend({
       winner: '',
       mode: MODE.ROUND_ROBIN,
       modes: Object.values(MODE),
+      round: 0,
+      roundCount: 0,
     }
   },
   computed: {
@@ -98,8 +105,10 @@ export default Vue.extend({
       this.choices = choices
       this.results = []
       this.winner = ''
+      this.round = 0
 
       if (this.mode === MODE.KNOCKOUT) {
+        this.roundCount = Math.ceil(Math.log2(choices.length))
         const {
           matchups,
           choicesLeft,
@@ -111,6 +120,7 @@ export default Vue.extend({
           this.results.push([remainder, null, 0])
         }
       } else {
+        this.roundCount = 0
         const {
           matchups,
           choicesLeft,
@@ -135,6 +145,7 @@ export default Vue.extend({
       }
 
       this.currentMatchupIndex = 0
+      this.round += 1
 
       const maxWins = Object.values(this.wins).sort().reverse()[0]
       const winners = Object.entries(this.wins)

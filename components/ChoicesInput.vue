@@ -1,22 +1,25 @@
 <template>
-  <div class="flex h-full w-full">
-    <textarea
-      v-model="choicesStr"
-      :rows="choiceCount + 1"
-      class="border border-gray-200 flex-1 text-2xl"
-      placeholder="Enter contestants here
-one
-per
-line"
-    />
+  <div class="sm:grid sm:grid-cols-2 gap-2 h-full w-full">
+    <div>
+      <textarea
+        v-model="choicesStr"
+        :rows="choiceCount + 1"
+        class="border border-gray-200 text-xl md:text-2xl p-1 w-full h-full"
+        placeholder="Enter contestants here
+      one
+      per
+      line"
+      />
+    </div>
     <button
       :disabled="!allowNext"
       :class="[
+        'block',
+        'w-full',
         'border',
         'p-1.5',
         'px-3',
         'rounded',
-        'flex-1',
         'text-xl',
         'md:text-5xl',
         'xl:text-7xl',
