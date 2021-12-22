@@ -1,32 +1,28 @@
 <template>
-  <div class="sm:grid sm:grid-cols-2 gap-2 h-full w-full">
-    <div>
-      <h2 class="text-xl font-bold">Select the mode</h2>
-      <label v-for="mode in modes" :key="mode" class="block text-lg">
-        <input
-          :id="`mode-select-${mode}`"
-          v-model="selectedMode"
-          type="radio"
-          name="mode-selection"
-          :value="mode"
-        />
-        {{ mode }}
-      </label>
-    </div>
+  <div class="h-full w-full">
+    <h2 class="text-xl font-bold">Select the mode</h2>
+    <label v-for="mode in modes" :key="mode" class="block text-lg">
+      <input
+        :id="`mode-select-${mode}`"
+        v-model="selectedMode"
+        type="radio"
+        name="mode-selection"
+        :value="mode"
+      />
+      {{ mode }}
+    </label>
     <button
       class="
+        mt-4
         block
         w-full
         border border-green-500
         bg-green-400
         text-green-900
-        p-1.5
-        px-3
+        p-2
         rounded
         flex-1
         text-xl
-        md:text-5xl
-        xl:text-7xl
         hover:bg-green-200 hover:text-green-500
         transition
         duration-300

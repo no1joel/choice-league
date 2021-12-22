@@ -52,6 +52,7 @@ export default Vue.extend({
     modes: MODE[]
     mode: MODE
     round: number
+    roundCount: number
   } {
     return {
       state: STATE.MODE_SELECT,

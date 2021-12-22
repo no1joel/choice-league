@@ -24,8 +24,7 @@
           'rounded-xl',
           'hover:bg-blue-300',
           'hover:border-blue-600',
-          'hover:shadow-xl',
-          'hover:shadow-cyan-500',
+          'hover:shadow-lg',
         ]"
         @click="$emit('select')"
       >

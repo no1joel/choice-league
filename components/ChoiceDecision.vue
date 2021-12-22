@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-versus gap-2 place-items-center h-full">
+  <div class="grid md:grid-cols-versus gap-2 place-items-center md:h-full">
     <div class="absolute top-0 right-0 text-sm text-gray-200">
       {{ matchupIndex + 1 }}/{{ matchupCount }}
       <span v-if="roundCount > 0"

@@ -4,7 +4,7 @@
       <textarea
         v-model="choicesStr"
         :rows="choiceCount + 1"
-        class="border border-gray-200 text-xl md:text-2xl p-1 w-full h-full"
+        class="border border-gray-200 text-xl p-1 w-full h-full"
         placeholder="Enter contestants here
       one
       per
@@ -21,8 +21,6 @@
         'px-3',
         'rounded',
         'text-xl',
-        'md:text-5xl',
-        'xl:text-7xl',
         'duration-1000',
         {
           'bg-green-400 text-green-900 hover:bg-green-200 hover:text-green-500 duration-300':
