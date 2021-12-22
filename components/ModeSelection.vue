@@ -22,7 +22,9 @@
         px-3
         rounded
         flex-1
-        text-7xl
+        text-xl
+        md:text-5xl
+        xl:text-7xl
         hover:bg-green-200 hover:text-green-500
         transition
         duration-300

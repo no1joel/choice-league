@@ -17,7 +17,9 @@ line"
         'px-3',
         'rounded',
         'flex-1',
-        'text-7xl',
+        'text-xl',
+        'md:text-5xl',
+        'xl:text-7xl',
         'duration-1000',
         {
           'bg-green-400 text-green-900 hover:bg-green-200 hover:text-green-500 duration-300':
