@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main class="p-10 h-screen w-screen">
     <ModeSelection
       v-if="showModeSelection"
       :modes="modes"
@@ -32,8 +32,8 @@ enum STATE {
 }
 
 enum MODE {
-  ROUND_ROBIN = 'Round Robin',
   KNOCKOUT = 'Knockout',
+  ROUND_ROBIN = 'Round Robin',
 }
 
 export default Vue.extend({

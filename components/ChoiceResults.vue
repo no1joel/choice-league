@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="h-full w-full">
     <h1 class="text-xl font-thin italic">And the winner is...</h1>
     <span class="text-9xl font-bold">{{ winner }}</span>
 

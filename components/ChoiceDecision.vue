@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-versus gap-2 place-items-center h-screen">
+  <div class="grid grid-cols-versus gap-2 place-items-center h-full">
     <ChoiceOption :choice="firstChoice" @select="onDecision(firstChoice)" />
     <span class="text-gray-800 text-xl italic font-thin">vs</span>
     <ChoiceOption :choice="secondChoice" @select="onDecision(secondChoice)" />
