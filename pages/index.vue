@@ -27,6 +27,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { getRoundChoices } from '../utils/getRoundChoices'
 
 enum STATE {
   MODE_SELECT,
@@ -85,30 +86,43 @@ export default Vue.extend({
       return this.matchups[this.currentMatchupIndex]
     },
     wins(): Record<string, number> {
-      return this.results
-        .map(([first, second, winIndex]) => [first, second][winIndex])
-        .reduce((acc, choice) => {
-          if (choice === null) {
-            return acc
-          }
-          const winCount = acc[choice] === undefined ? 0 : acc[choice]
-          acc[choice] = winCount + 1
-          return acc
-        }, {} as Record<string, number>)
+      return Object.fromEntries(
+        Object.entries(this.choiceResults).map(([choice, { wins }]) => [
+          choice,
+          wins,
+        ])
+      )
     },
     losses(): Record<string, number> {
-      return this.results
-        .map(
-          ([first, second, winIndex]) => [first, second][winIndex === 1 ? 0 : 1]
-        )
-        .reduce((acc, choice) => {
-          if (choice === null) {
-            return acc
-          }
-          const loseCount = acc[choice] === undefined ? 0 : acc[choice]
-          acc[choice] = loseCount + 1
-          return acc
-        }, {} as Record<string, number>)
+      return Object.fromEntries(
+        Object.entries(this.choiceResults).map(([choice, { losses }]) => [
+          choice,
+          losses,
+        ])
+      )
+    },
+    choiceResults(): Record<
+      string,
+      { wins: number; losses: number; total: number }
+    > {
+      return this.results.reduce((acc, [first, second, winIndex]) => {
+        const choices = [first, second]
+        const [winner] = choices.splice(winIndex, 1)
+        const [loser] = choices
+        if (winner !== null) {
+          const winnerCounts = acc[winner] || { wins: 0, losses: 0, total: 0 }
+          winnerCounts.wins += 1
+          winnerCounts.total += 1
+          acc[winner] = winnerCounts
+        }
+        if (loser !== null) {
+          const loserCounts = acc[loser] || { wins: 0, losses: 0, total: 0 }
+          loserCounts.losses += 1
+          loserCounts.total += 1
+          acc[loser] = loserCounts
+        }
+        return acc
+      }, {} as Record<string, { wins: number; losses: number; total: number }>)
     },
     winners(): string[] {
       const maxWins = Object.values(this.wins).sort().reverse()[0]
@@ -120,6 +134,28 @@ export default Vue.extend({
       return Object.entries(this.losses)
         .filter(([, lossCount]) => lossCount === 1)
         .map(([choice]) => choice)
+    },
+    lossLimit(): number {
+      let lossLimit: number
+      switch (this.mode) {
+        case MODE.KNOCKOUT:
+          lossLimit = 1
+          break
+        case MODE.DOUBLE_ELIMINATION:
+          lossLimit = 2
+          break
+        case MODE.ROUND_ROBIN:
+          lossLimit = this.choices.length - 1
+      }
+      return lossLimit
+    },
+    activeChoices(): [
+      string,
+      { wins: number; losses: number; total: number }
+    ][] {
+      return Object.entries(this.choiceResults).filter(
+        ([, { losses }]) => losses < this.lossLimit
+      )
     },
   },
   methods: {
@@ -174,11 +210,15 @@ export default Vue.extend({
       this.currentMatchupIndex = 0
       this.round += 1
 
-      if (
-        this.winners.length === 1 &&
-        !(this.mode === MODE.DOUBLE_ELIMINATION && this.singleLosers.length > 0)
-      ) {
+      if (this.mode === MODE.ROUND_ROBIN) {
         const [winner] = this.winners
+        this.winner = winner
+        this.state = STATE.RESULTS
+        return
+      }
+
+      if (this.activeChoices.length === 1) {
+        const [winner] = this.activeChoices[0]
         this.winner = winner
         this.state = STATE.RESULTS
         return
@@ -188,30 +228,13 @@ export default Vue.extend({
         this.mode === MODE.KNOCKOUT ||
         this.mode === MODE.DOUBLE_ELIMINATION
       ) {
-        if (
-          this.mode === MODE.DOUBLE_ELIMINATION &&
-          this.singleLosers.length > 0 &&
-          this.winners.length < 2
-        ) {
-          const {
-            matchups,
-            choicesLeft,
-          }: { matchups: [string, string][]; choicesLeft: string[] } =
-            getKnockoutMatchups(this.singleLosers)
-          this.matchups = matchups
-          if (choicesLeft.length > 0) {
-            const [remainder] = choicesLeft
-            this.matchups.unshift([remainder, null])
-            this.onDecisionMade(remainder)
-            return
-          }
-        }
+        const roundChoices: string[] = getRoundChoices(this.activeChoices)
 
         const {
           matchups,
           choicesLeft,
         }: { matchups: [string, string][]; choicesLeft: string[] } =
-          getKnockoutMatchups(this.winners)
+          getKnockoutMatchups(roundChoices)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
           const [remainder] = choicesLeft
@@ -229,6 +252,7 @@ function getKnockoutMatchups(choices: string[]): {
 } {
   const matchups: [string, string][] = []
   const choicesLeft = [...choices]
+
   while (choicesLeft.length > 1) {
     const firstIndex = Math.floor(choicesLeft.length * Math.random())
     const [first] = choicesLeft.splice(firstIndex, 1)
