@@ -1,7 +1,8 @@
 <template>
   <div class="w-full h-full grid grid-auto-rows-2 gap-2 justify-items-stretch">
     <div class="flex items-center text-center self-end relative">
-      <div class="flex-1 text-5xl">{{ choice }}</div>
+      <div class="flex-1 text-5xl">{{ choice.value }}</div>
+      <img v-if="choice.imgSrc" :src="choice.imgSrc" />
       <button
         class="absolute top-0 right-0 text-gray-400 text-sm"
         @click="onCopyClick"
@@ -35,12 +36,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { PropType } from 'vue'
+import { Choice } from '~/utils/Choice'
 
 export default Vue.extend({
   props: {
     choice: {
-      type: String,
+      type: Object as PropType<Choice>,
       required: true,
     },
   },
@@ -49,7 +51,7 @@ export default Vue.extend({
   },
   methods: {
     onCopyClick() {
-      navigator.clipboard.writeText(this.choice)
+      navigator.clipboard.writeText(this.choice.value)
       this.copied = true
       setTimeout(() => (this.copied = false), 3000)
     },

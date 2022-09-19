@@ -13,16 +13,17 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { PropType } from 'vue'
+import { Choice } from '../utils/Choice'
 
 export default Vue.extend({
   props: {
     firstChoice: {
-      type: String,
+      type: Object as PropType<Choice>,
       required: true,
     },
     secondChoice: {
-      type: String,
+      type: Object as PropType<Choice>,
       required: true,
     },
     roundCount: {

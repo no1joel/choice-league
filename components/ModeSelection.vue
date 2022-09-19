@@ -12,21 +12,7 @@
       {{ mode }}
     </label>
     <button
-      class="
-        mt-4
-        block
-        w-full
-        border border-green-500
-        bg-green-400
-        text-green-900
-        p-2
-        rounded
-        flex-1
-        text-xl
-        hover:bg-green-200 hover:text-green-500
-        transition
-        duration-300
-      "
+      class="mt-4 block w-full border border-green-500 bg-green-400 text-green-900 p-2 rounded flex-1 text-xl hover:bg-green-200 hover:text-green-500 transition duration-300"
       @click="onNextClick"
     >
       Next

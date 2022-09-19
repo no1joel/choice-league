@@ -38,6 +38,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { Choice } from '~/utils/Choice'
 
 export default Vue.extend({
   data() {
@@ -49,10 +50,11 @@ export default Vue.extend({
     choiceCount(): number {
       return this.choices.length
     },
-    choices(): string[] {
+    choices(): Choice[] {
       return this.choicesStr
         .split('\n')
         .filter((choice) => choice.trim().length > 0)
+        .map((value) => ({ value } as Choice))
     },
     allowNext(): boolean {
       return this.choiceCount > 1

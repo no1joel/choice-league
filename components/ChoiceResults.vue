@@ -1,7 +1,7 @@
 <template>
   <div class="h-full w-full">
     <h1 class="text-xl font-thin italic">And the winner is...</h1>
-    <span class="text-9xl font-bold">{{ winner }}</span>
+    <span class="text-9xl font-bold">{{ winner.value }}</span>
 
     <h2 class="mt-16 text-lg font-bold">Rankings</h2>
     <ul>
@@ -22,12 +22,12 @@
         <span>{{ index + 1 }}.</span>
         <span
           :class="{ 'font-bold': winIndex === 0, 'font-thin': winIndex === 1 }"
-          >{{ first }}
+          >{{ first.value }}
         </span>
         <span class="text-sm italic">vs</span>
         <span
           :class="{ 'font-bold': winIndex === 1, 'font-thin': winIndex === 0 }"
-          >{{ second || 'No contest!' }}</span
+          >{{ (second !== null && second.value) || 'No contest!' }}</span
         >
       </li>
     </ul>
@@ -35,20 +35,21 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { PropType } from 'vue'
+import { Choice } from '~/utils/Choice'
 
 export default Vue.extend({
   props: {
     results: {
-      type: Array,
+      type: Array as PropType<[Choice, Choice | null, number][]>,
       required: true,
     },
     wins: {
-      type: Object,
+      type: Object as PropType<Record<string, number>>,
       required: true,
     },
     winner: {
-      type: String,
+      type: Object as PropType<Choice>,
       required: true,
     },
   },
@@ -59,28 +60,28 @@ export default Vue.extend({
     reverseResults() {
       return this.results.slice().reverse()
     },
-    rankings(): [number, string][] {
+    rankings(): [number, Choice][] {
       const choices = new Set(
-        (this.results as [string, string][])
+        this.results
           .flatMap(([first, second]) => [first, second])
           .filter((choice) => choice !== null)
-      )
+      ) as Set<Choice>
       return [...choices]
-        .map((choice) => [this.getRanking(choice), choice] as [number, string])
+        .map((choice) => [this.getRanking(choice), choice] as [number, Choice])
         .map(
           ([ranking, choice]) =>
             [
               ranking === 0 ? this.winCountsRanked.length + 1 : ranking,
               choice,
-            ] as [number, string]
+            ] as [number, Choice]
         )
         .sort(([firstRank], [secondRank]) => secondRank - firstRank)
         .reverse()
     },
   },
   methods: {
-    getRanking(choice: string): number {
-      const winCount = this.wins[choice]
+    getRanking(choice: Choice): number {
+      const winCount = this.wins[choice.value]
       if (winCount === -1) {
         return Object.entries(this.wins).length
       }

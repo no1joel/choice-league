@@ -1,6 +1,8 @@
+import { Choice } from './Choice'
+
 export function getRoundChoices(
-  potential: [string, { losses: number; total: number }][]
-): string[] {
+  potential: [Choice, { losses: number; total: number }][]
+): Choice[] {
   const lossTotals = potential
     .map(([, { losses, total }]) => [total, losses])
     .sort(([firstTotal, firstLosses], [secondTotal, secondLosses]) => {
@@ -13,7 +15,7 @@ export function getRoundChoices(
       return totalDiff
     })
   const totals = new Set(lossTotals.map(([total]) => total))
-  let roundChoices: string[] = []
+  let roundChoices: Choice[] = []
   while (roundChoices.length < 2 && lossTotals.length > 0) {
     const [lossTotalSelector] = lossTotals.splice(0, 1)
     const [totalSelector, lossSelector] = lossTotalSelector

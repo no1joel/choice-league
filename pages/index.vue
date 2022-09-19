@@ -27,6 +27,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { Choice } from '../utils/Choice'
 import { getRoundChoices } from '../utils/getRoundChoices'
 
 enum STATE {
@@ -42,15 +43,22 @@ enum MODE {
   ROUND_ROBIN = 'Round Robin',
 }
 
+interface ResultCounts {
+  wins: number
+  losses: number
+  total: number
+}
+type ChoiceResults = [Choice, ResultCounts][]
+
 export default Vue.extend({
   name: 'IndexPage',
   data(): {
     state: STATE
-    choices: string[]
-    matchups: [string, string | null][]
+    choices: Choice[]
+    matchups: [Choice, Choice | null][]
     currentMatchupIndex: number
-    results: [string, string | null, number][]
-    winner: string
+    results: [Choice, Choice | null, number][]
+    winner: Choice | null
     modes: MODE[]
     mode: MODE
     round: number
@@ -62,7 +70,7 @@ export default Vue.extend({
       matchups: [],
       currentMatchupIndex: 0,
       results: [],
-      winner: '',
+      winner: null,
       mode: MODE.ROUND_ROBIN,
       modes: Object.values(MODE),
       round: 0,
@@ -82,57 +90,72 @@ export default Vue.extend({
     showResults(): boolean {
       return this.state === STATE.RESULTS
     },
-    currentMatchup(): [string, string | null] | undefined {
+    currentMatchup(): [Choice, Choice | null] | undefined {
       return this.matchups[this.currentMatchupIndex]
     },
-    wins(): Record<string, number> {
-      return Object.fromEntries(
-        Object.entries(this.choiceResults).map(([choice, { wins }]) => [
-          choice,
-          wins,
-        ])
+    choiceResults(): ChoiceResults {
+      return this.results.reduce(
+        (acc: ChoiceResults, [first, second, winIndex]) => {
+          const choices = [first, second]
+          const [winner] = choices.splice(winIndex, 1)
+          const [loser] = choices
+          const getChoiceIndex = (choice: Choice) =>
+            acc.findIndex(([c]) => c === choice)
+          const getChoiceDefaults = (): ResultCounts => ({
+            wins: 0,
+            losses: 0,
+            total: 0,
+          })
+          const getChoiceValues = (choice: Choice) => {
+            const index = getChoiceIndex(choice)
+            if (index > -1) {
+              return { ...acc[index][1] }
+            }
+            return getChoiceDefaults()
+          }
+          const setChoiceValues = (choice: Choice, values: ResultCounts) => {
+            const index = getChoiceIndex(choice)
+            if (index > -1) {
+              acc[index][1] = values
+            } else {
+              acc.push([choice, values])
+            }
+          }
+          if (winner !== null) {
+            const counts = getChoiceValues(winner)
+            counts.wins += 1
+            counts.total += 1
+            setChoiceValues(winner, counts)
+          }
+          if (loser !== null) {
+            const counts = getChoiceValues(loser)
+            counts.losses += 1
+            counts.total += 1
+            setChoiceValues(loser, counts)
+          }
+          return acc
+        },
+        []
       )
     },
-    losses(): Record<string, number> {
-      return Object.fromEntries(
-        Object.entries(this.choiceResults).map(([choice, { losses }]) => [
-          choice,
-          losses,
-        ])
-      )
+    wins(): [Choice, number][] {
+      return this.choiceResults.map(([choice, { wins }]) => [choice, wins])
     },
-    choiceResults(): Record<
-      string,
-      { wins: number; losses: number; total: number }
-    > {
-      return this.results.reduce((acc, [first, second, winIndex]) => {
-        const choices = [first, second]
-        const [winner] = choices.splice(winIndex, 1)
-        const [loser] = choices
-        if (winner !== null) {
-          const winnerCounts = acc[winner] || { wins: 0, losses: 0, total: 0 }
-          winnerCounts.wins += 1
-          winnerCounts.total += 1
-          acc[winner] = winnerCounts
-        }
-        if (loser !== null) {
-          const loserCounts = acc[loser] || { wins: 0, losses: 0, total: 0 }
-          loserCounts.losses += 1
-          loserCounts.total += 1
-          acc[loser] = loserCounts
-        }
-        return acc
-      }, {} as Record<string, { wins: number; losses: number; total: number }>)
+    losses(): [Choice, number][] {
+      return this.choiceResults.map(([choice, { losses }]) => [choice, losses])
     },
-    winners(): string[] {
-      const maxWins = Object.values(this.wins).sort().reverse()[0]
-      return Object.entries(this.wins)
-        .filter(([, winCount]) => winCount === maxWins)
+    winners(): Choice[] {
+      const maxWins = this.choiceResults
+        .map(([, { wins }]) => wins)
+        .sort()
+        .reverse()[0]
+      return this.choiceResults
+        .filter(([, { wins }]) => wins === maxWins)
         .map(([choice]) => choice)
     },
-    singleLosers(): string[] {
-      return Object.entries(this.losses)
-        .filter(([, lossCount]) => lossCount === 1)
+    singleLosers(): Choice[] {
+      return this.choiceResults
+        .filter(([, { losses }]) => losses === 1)
         .map(([choice]) => choice)
     },
     lossLimit(): number {
@@ -150,10 +173,10 @@ export default Vue.extend({
       return lossLimit
     },
     activeChoices(): [
-      string,
+      Choice,
       { wins: number; losses: number; total: number }
     ][] {
-      return Object.entries(this.choiceResults).filter(
+      return this.choiceResults.filter(
         ([, { losses }]) => losses < this.lossLimit
       )
     },
@@ -163,11 +186,11 @@ export default Vue.extend({
       this.state = STATE.ENTERING_CHOICES
       this.mode = mode
     },
-    onChoicesEntered(choices: string[]) {
+    onChoicesEntered(choices: Choice[]) {
       this.state = STATE.BATTLE
       this.choices = choices
       this.results = []
-      this.winner = ''
+      this.winner = null
       this.round = 0
 
       if (this.mode === MODE.ROUND_ROBIN) {
@@ -175,7 +198,7 @@ export default Vue.extend({
         const {
           matchups,
           choicesLeft,
-        }: { matchups: [string, string][]; choicesLeft: string[] } =
+        }: { matchups: [Choice, Choice][]; choicesLeft: Choice[] } =
           getRoundRobinMatchups(choices)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
@@ -187,7 +210,7 @@ export default Vue.extend({
         const {
           matchups,
           choicesLeft,
-        }: { matchups: [string, string][]; choicesLeft: string[] } =
+        }: { matchups: [Choice, Choice][]; choicesLeft: Choice[] } =
           getKnockoutMatchups(choices)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
@@ -196,7 +219,7 @@ export default Vue.extend({
         }
       }
     },
-    onDecisionMade(choice: string): void {
+    onDecisionMade(choice: Choice): void {
       if (this.currentMatchup === undefined) {
         return
       }
@@ -211,7 +234,7 @@ export default Vue.extend({
       this.round += 1
 
       if (this.mode === MODE.ROUND_ROBIN) {
-        const [winner] = this.winners
+        const winner = this.winners[0]
         this.winner = winner
         this.state = STATE.RESULTS
         return
@@ -228,12 +251,12 @@ export default Vue.extend({
         this.mode === MODE.KNOCKOUT ||
         this.mode === MODE.DOUBLE_ELIMINATION
       ) {
-        const roundChoices: string[] = getRoundChoices(this.activeChoices)
+        const roundChoices: Choice[] = getRoundChoices(this.activeChoices)
 
         const {
           matchups,
           choicesLeft,
-        }: { matchups: [string, string][]; choicesLeft: string[] } =
+        }: { matchups: [Choice, Choice][]; choicesLeft: Choice[] } =
           getKnockoutMatchups(roundChoices)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
@@ -246,11 +269,11 @@ export default Vue.extend({
   },
 })
 
-function getKnockoutMatchups(choices: string[]): {
-  matchups: [string, string][]
-  choicesLeft: string[]
+function getKnockoutMatchups(choices: Choice[]): {
+  matchups: [Choice, Choice][]
+  choicesLeft: Choice[]
 } {
-  const matchups: [string, string][] = []
+  const matchups: [Choice, Choice][] = []
   const choicesLeft = [...choices]
 
   while (choicesLeft.length > 1) {
@@ -264,11 +287,11 @@ function getKnockoutMatchups(choices: string[]): {
   return { matchups, choicesLeft }
 }
 
-function getRoundRobinMatchups(choices: string[]): {
-  matchups: [string, string][]
-  choicesLeft: string[]
+function getRoundRobinMatchups(choices: Choice[]): {
+  matchups: [Choice, Choice][]
+  choicesLeft: Choice[]
 } {
-  const matchups: [string, string][] = []
+  const matchups: [Choice, Choice][] = []
 
   let copy = choices.slice()
   while (copy.length > 1) {
@@ -278,7 +301,7 @@ function getRoundRobinMatchups(choices: string[]): {
       .map((other) => [first, other])
       .map(
         (pair) =>
-          (Math.random() > 0.5 ? pair.reverse() : pair) as [string, string]
+          (Math.random() > 0.5 ? pair.reverse() : pair) as [Choice, Choice]
       )
       .forEach((pair) => matchups.push(pair))
   }
