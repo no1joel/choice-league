@@ -5,11 +5,11 @@
 
     <h2 class="mt-16 text-lg font-bold">Rankings</h2>
     <ul>
-      <li v-for="[rank, choice] in rankings" :key="choice">
+      <li v-for="[rank, choice] in rankings" :key="choice.value">
         <span class="font-serif">#{{ rank }}</span>
-        <span>{{ choice }}</span>
+        <span>{{ choice.value }}</span>
         <span class="font-thin font-mono text-xs"
-          >({{ wins[choice] || 0 }})</span
+          >({{ winsByValue[choice.value] || 0 }})</span
         >
       </li>
     </ul>
@@ -45,7 +45,7 @@ export default Vue.extend({
       required: true,
     },
     wins: {
-      type: Object as PropType<Record<string, number>>,
+      type: Array as PropType<[Choice, number][]>,
       required: true,
     },
     winner: {
@@ -55,7 +55,9 @@ export default Vue.extend({
   },
   computed: {
     winCountsRanked(): number[] {
-      return [...new Set(Object.values(this.wins) as number[])].sort().reverse()
+      return [...new Set(Object.values(this.winsByValue) as number[])]
+        .sort()
+        .reverse()
     },
     reverseResults() {
       return this.results.slice().reverse()
@@ -78,10 +80,15 @@ export default Vue.extend({
         .sort(([firstRank], [secondRank]) => secondRank - firstRank)
         .reverse()
     },
+    winsByValue() {
+      return Object.fromEntries(
+        this.wins.map(([choice, wins]) => [choice.value, wins])
+      )
+    },
   },
   methods: {
     getRanking(choice: Choice): number {
-      const winCount = this.wins[choice.value]
+      const winCount = this.winsByValue[choice.value]
       if (winCount === -1) {
         return Object.entries(this.wins).length
       }

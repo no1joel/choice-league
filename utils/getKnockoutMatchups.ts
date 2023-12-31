@@ -1,6 +1,5 @@
 import { Choice } from './Choice'
-
-type Result = [Choice, Choice, number]
+import { Result } from './Result'
 
 const containsChoice = (result: Result, choice: Choice) =>
   result[0] === choice || result[1] === choice
@@ -68,7 +67,7 @@ export function getKnockoutMatchups(
           second === secondChosen,
       ])
       .filter(([_index, shouldDelete]) => shouldDelete)
-      .map(([index]) => index)
+      .map(([index]) => index) as number[]
     otherPairIndexes.reverse().forEach((index) => allPairs.splice(index, 1))
     const choicesLeftIndexes = [
       choicesLeft.indexOf(firstChosen),

@@ -14,6 +14,7 @@
       :round-index="round"
       :matchup-count="matchups.length"
       :matchup-index="currentMatchupIndex"
+      :choices-left="choicesLeft"
       @decision-made="onDecisionMade"
     />
     <ChoiceResults
@@ -28,6 +29,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Choice } from '../utils/Choice'
+import { Result } from '../utils/Result'
 import { getKnockoutMatchups } from '../utils/getKnockoutMatchups'
 import { getRoundChoices } from '../utils/getRoundChoices'
 import { getRoundRobinMatchups } from '../utils/getRoundRobinMatchups'
@@ -59,7 +61,7 @@ export default Vue.extend({
     choices: Choice[]
     matchups: [Choice, Choice | null][]
     currentMatchupIndex: number
-    results: [Choice, Choice | null, number][]
+    results: Result[]
     winner: Choice | null
     modes: MODE[]
     mode: MODE
@@ -182,6 +184,18 @@ export default Vue.extend({
         ([, { losses }]) => losses < this.lossLimit
       )
     },
+    choicesLeft(): number {
+      return this.choices
+        .map((choice) => {
+          const thisChoiceResults = this.choiceResults.find(
+            ([resultChoice]) => choice === resultChoice
+          )
+          const losses = thisChoiceResults?.[1].losses || 0
+          const remaining = this.lossLimit - losses
+          return remaining
+        })
+        .reduce((a, b) => a + b)
+    },
   },
   methods: {
     onModeSelected(mode: MODE) {
@@ -213,7 +227,7 @@ export default Vue.extend({
           matchups,
           choicesLeft,
         }: { matchups: [Choice, Choice][]; choicesLeft: Choice[] } =
-          getKnockoutMatchups(choices)
+          getKnockoutMatchups(choices, this.results)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
           const [remainder] = choicesLeft
@@ -259,7 +273,7 @@ export default Vue.extend({
           matchups,
           choicesLeft,
         }: { matchups: [Choice, Choice][]; choicesLeft: Choice[] } =
-          getKnockoutMatchups(roundChoices)
+          getKnockoutMatchups(roundChoices, this.results)
         this.matchups = matchups
         if (choicesLeft.length > 0) {
           const [remainder] = choicesLeft

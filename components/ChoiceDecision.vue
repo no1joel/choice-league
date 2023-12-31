@@ -1,10 +1,7 @@
 <template>
   <div class="grid md:grid-cols-versus gap-2 place-items-center md:h-full">
     <div class="absolute top-0 right-0 text-sm text-gray-200">
-      {{ matchupIndex + 1 }}/{{ matchupCount }}
-      <span v-if="roundCount > 0"
-        >(Round {{ roundIndex + 1 }}/{{ roundCount }})</span
-      >
+      {{ choicesLeft }}
     </div>
     <ChoiceOption :choice="firstChoice" @select="onDecision(firstChoice)" />
     <span class="text-gray-800 text-xl italic font-thin">vs</span>
@@ -18,6 +15,10 @@ import { Choice } from '../utils/Choice'
 
 export default Vue.extend({
   props: {
+    choicesLeft: {
+      type: Number,
+      required: true,
+    },
     firstChoice: {
       type: Object as PropType<Choice>,
       required: true,
