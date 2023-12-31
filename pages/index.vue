@@ -28,7 +28,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import { Choice } from '../utils/Choice'
+import { getKnockoutMatchups } from '../utils/getKnockoutMatchups'
 import { getRoundChoices } from '../utils/getRoundChoices'
+import { getRoundRobinMatchups } from '../utils/getRoundRobinMatchups'
 
 enum STATE {
   MODE_SELECT,
@@ -268,46 +270,4 @@ export default Vue.extend({
     },
   },
 })
-
-function getKnockoutMatchups(choices: Choice[]): {
-  matchups: [Choice, Choice][]
-  choicesLeft: Choice[]
-} {
-  const matchups: [Choice, Choice][] = []
-  const choicesLeft = [...choices]
-
-  while (choicesLeft.length > 1) {
-    const firstIndex = Math.floor(choicesLeft.length * Math.random())
-    const [first] = choicesLeft.splice(firstIndex, 1)
-    const secondIndex = Math.floor(choicesLeft.length * Math.random())
-    const [second] = choicesLeft.splice(secondIndex, 1)
-    matchups.push([first, second])
-  }
-
-  return { matchups, choicesLeft }
-}
-
-function getRoundRobinMatchups(choices: Choice[]): {
-  matchups: [Choice, Choice][]
-  choicesLeft: Choice[]
-} {
-  const matchups: [Choice, Choice][] = []
-
-  let copy = choices.slice()
-  while (copy.length > 1) {
-    const [first, ...rest] = copy
-    copy = rest
-    rest
-      .map((other) => [first, other])
-      .map(
-        (pair) =>
-          (Math.random() > 0.5 ? pair.reverse() : pair) as [Choice, Choice]
-      )
-      .forEach((pair) => matchups.push(pair))
-  }
-
-  matchups.sort(() => Math.random() - 0.5)
-
-  return { matchups, choicesLeft: [] }
-}
 </script>
