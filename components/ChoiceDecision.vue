@@ -44,7 +44,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    onDecision(choice: string) {
+    onDecision(choice: Choice) {
       this.$emit('decision-made', choice)
     },
   },
